@@ -166,6 +166,8 @@ _tools/__pycache__/
 .Rproj.user/
 _tools/fun_s.py
 _tools/ReportRunner.exe
+info/*.csv
+info/*.json
 out/*.parquet
 out/csv/
 scripts/python/2_run_after_pwsh_script_pd.py
