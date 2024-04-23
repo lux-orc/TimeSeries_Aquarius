@@ -1,0 +1,6 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="true" type="PowerShellRunType" factoryName="PowerShell" workingDirectory="$ContentRoot$\scripts" executablePath="C:\Users\lux\AppData\Local\Microsoft\WindowsApps\pwsh.exe">
+    <envs />
+    <method v="2" />
+  </configuration>
+</component>
