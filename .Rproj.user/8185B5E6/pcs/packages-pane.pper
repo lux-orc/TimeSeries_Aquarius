@@ -1,7 +1,0 @@
-{
-    "installOptions": {
-        "installFromRepository": true,
-        "libraryPath": "C:/Users/lux/software/R/library",
-        "installDependencies": true
-    }
-}
