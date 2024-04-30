@@ -128,7 +128,7 @@ def _ts_valid_pd(ts: Any, /) -> str:
         return 'The Series must contain real numbers!'
 
 
-def _ts_valid_pl(ts: Any, /) -> str:
+def _ts_valid_pl(ts: Any, /) -> 'str | None':
     """Validate the input time series: `None` returned as valid"""
     if isinstance(ts, pl.DataFrame):
         if ts.width < 2:
@@ -136,11 +136,20 @@ def _ts_valid_pl(ts: Any, /) -> str:
         if len(col_dt := ts.select(cs.temporal()).columns) != 1:
             return '`ts` must have one datetime column!'
         if ts[col_dt[0]].unique().len() != ts[col_dt[0]].len():
-            return 'The values in the datetime column must be unique!'
+            return f'The values in the temporal column {col_dt} must be unique!'
         if not ts.sort(by=col_dt, descending=False).equals(ts):
-            return 'The datetime column in `ts` must be in chronicle order!'
+            return f'Column {col_dt} must be sorted in chronicle order!'
         if ts.width != ts.select(cs.numeric()).width + 1:
-            return 'Apart from the datetime column, all the others must be numeric!'
+            return f'Apart from column {col_dt}, the rest column(s) must be numeric!'
+        if not ts.flags.get(col_dt[0]).get('SORTED_ASC'):
+            print(
+                cp(
+                    f'\n\t{col_dt} in the input Frame is NOT flagged as sorted '
+                    'even though it is in chronicle order!\n'
+                    '\t->\tThis may cause issues when performing table joins in Polars!\n',
+                    fg=35,
+                )
+            )
         return None
     return '`ts` must be a polars.DataFrame!'
 
