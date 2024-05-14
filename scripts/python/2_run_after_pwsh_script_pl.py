@@ -1,4 +1,11 @@
 
+"""
+Notes:
+    There is no procedure to validate the read data!
+    To validate the data, special procedures need to take:
+        eg, rainfall and flow data cannot be negative, etc.,
+"""
+
 import json
 import time
 from pathlib import Path
@@ -9,6 +16,7 @@ import _tools.fun_s_pl as fpl
 time_start = time.perf_counter()
 
 pl.Config.set_tbl_cols(-1)  # Show all columns
+# pl.Config.set_tbl_rows(50)  # Show #rows
 
 
 # Set up the path of the project
@@ -67,7 +75,7 @@ for path_folder in path_folders:
             .replace('# ', '')
             .replace(f'@{plate}', '')
             .replace(f'{param}.', '')
-            .split(' ')
+            .split(' ', maxsplit=1)
         )
         # To make some column names the same as those from 'aquarius.orc.govt.nz/AQUARIUS'
         tmp = tmp.rename({tmp.columns[-1]: 'Value'}).drop_nulls().with_columns(
