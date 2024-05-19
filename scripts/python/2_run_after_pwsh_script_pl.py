@@ -2,8 +2,8 @@
 """
 Notes:
     There is no procedure to validate the read data!
-    To validate the data, special procedures need to take:
-        eg, rainfall and flow data cannot be negative, etc.,
+    To validate the data, special filters are needed:
+        eg, rainfall/flow data cannot be negative, etc.,
 """
 
 import json
