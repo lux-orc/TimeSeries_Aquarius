@@ -141,15 +141,6 @@ def _ts_valid_pl(ts: Any, /) -> 'str | None':
             return f'Column {col_dt} must be sorted in chronicle order!'
         if ts.width != ts.select(cs.numeric()).width + 1:
             return f'Apart from column {col_dt}, the rest column(s) must be numeric!'
-        if not ts.flags.get(col_dt[0]).get('SORTED_ASC'):
-            print(
-                cp(
-                    f'\n\t{col_dt} in the input Frame is NOT flagged as sorted '
-                    'even though it is in chronicle order!\n'
-                    '\t->\tThis may cause issues when performing table joins in Polars!\n',
-                    fg=35,
-                )
-            )
         return None
     return '`ts` must be a polars.DataFrame!'
 
