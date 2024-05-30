@@ -1,7 +1,4 @@
 
-# stackoverflow.com/questions/67217049/passing-an-argument-list-with-spaces-in-powershell
-    # '"Discharge Volume.Telemetry@EX331"'
-
 # Measure-Command {.\check_flow_availability.ps1 | Out-Default}  # Check the time to run
 
 
