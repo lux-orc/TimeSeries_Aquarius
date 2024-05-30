@@ -1,12 +1,12 @@
 
 # Measure-Command {.\check_flow_availability.ps1 | Out-Default}  # Check the time to run
 
-
 Import-Module ../_tools/Get-TimeSeries.psm1
-
 $exe = '../_tools/ReportRunner.exe'
 
 
+# There are currently 79 flow sites with net length > 5 years (till 30 May 2024)
+# The following are to obtain their full historic records (in daily basis)
 
 
 # Flow sites (daily mean)
