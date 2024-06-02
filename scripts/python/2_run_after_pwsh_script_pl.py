@@ -65,7 +65,7 @@ for path_folder in path_folders:
     # Make the DataFrame for each `folder_name`
     ts = pl.DataFrame()
     for csv_path in csv_paths:
-        tmp = pl.read_csv(csv_path, skip_rows=11, dtypes=[pl.String, pl.Float64])
+        tmp = pl.read_csv(csv_path, skip_rows=11, schema_overrides=[pl.String, pl.Float64])
         *param_part, plate = tmp.columns[-1].split('@')
         param = '@'.join(param_part)
         uid_hyphen, lab = (
