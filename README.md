@@ -14,4 +14,4 @@ To download the time series data from Aquarius.
     - The R packages needed are:
       - [httr](https://cran.r-project.org/web/packages/httr/index.html)
       - [data.table](https://cran.r-project.org/web/packages/data.table/index.html)
-
+      - [arrow](https://cran.r-project.org/web/packages/arrow/index.html)

@@ -113,7 +113,7 @@ for path_folder in path_folders:
         print(
             fpl.cp(
                 '\tWide format is ignored due to '
-                f'the duplicated plate numbers from files:\t{sorted(loc_dup)}\n',
+                f'the duplicated site names from files:\t{sorted(loc_dup)}\n',
                 fg=34,
             )
         )

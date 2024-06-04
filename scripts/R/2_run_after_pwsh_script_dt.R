@@ -85,7 +85,7 @@ for (path_folder in path_folders) {
           C > 1, sort(CSV)]
     cat(cp(
       paste0(
-        "Wide format is ignored due to the duplicated plate numbers from files: [",
+        "Wide format is ignored due to the duplicated site names from files: [",
         paste(loc_dup, collapse = ", "),
         "]"
       ),

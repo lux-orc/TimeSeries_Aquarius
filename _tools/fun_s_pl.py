@@ -104,7 +104,7 @@ def is_numeric(x: Any, /) -> bool:
     return isinstance(x, (int, float, complex)) and not isinstance(x, bool)
 
 
-def _ts_valid_pd(ts: Any, /) -> str:
+def _ts_valid_pd(ts: Any, /) -> 'str | None':
     """Validate the input time series: `None` returned as passed"""
     if not isinstance(ts, (pd.Series, pd.DataFrame)):
         return '`ts` must be either pandas.Series or pandas.DataFrame!'
@@ -348,7 +348,7 @@ def ts_info(ts: pl.DataFrame) -> 'pl.DataFrame | None':
     )
     info = (
         pl.LazyFrame({'Site': col_rest_})
-        .join(info, on='Site', how='left')
+        .join(info, on='Site', how='left', coalesce=True)
         .with_columns(Site=pl.Series(col_rest))
     )
     if con == -1:
@@ -585,7 +585,9 @@ def hourly_WU_AQ(
         }
         return pl.concat(d.values(), how='vertical').select('Site', 'Timestamp', 'Value')
     lst = [_HWU_AQ(site, date_start, date_end, False) for site in siteList]
-    return na_ts_insert(reduce(lambda a, b: a.join(b, on='Time', how='outer_coalesce'), lst))
+    return na_ts_insert(
+        reduce(lambda a, b: a.join(b, on='Time', how='full', coalesce=True), lst)
+    )
 
 
 def daily_WU_AQ(
@@ -626,4 +628,6 @@ def daily_WU_AQ(
         }
         return pl.concat(d.values(), how='vertical').select('Site', 'Timestamp', 'Value')
     lst = [_DWU_AQ(site, date_start, date_end, False) for site in siteList]
-    return na_ts_insert(reduce(lambda a, b: a.join(b, on='Date', how='outer_coalesce'), lst))
+    return na_ts_insert(
+        reduce(lambda a, b: a.join(b, on='Date', how='full', coalesce=True), lst)
+    )
