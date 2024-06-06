@@ -1,5 +1,5 @@
-ipython>=8.21.0
-pandas>=2.2.0
-polars>=0.20.9
-pyarrow>=15.0.0
-urllib3>=2.2.0
+ipython==8.25.0
+pandas==2.2.2
+polars==0.20.31
+pyarrow==16.1.0
+urllib3==2.2.1
