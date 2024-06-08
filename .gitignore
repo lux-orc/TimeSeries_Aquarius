@@ -164,13 +164,12 @@ cython_debug/
 _tools/__pycache__/
 .idea/
 .Rproj.user/
-_tools/fun_s.py
+_tools/fun_s_pl.py
 _tools/ReportRunner.exe
-info/*.csv
-info/*.json
 out/*.parquet
 out/csv/
-#scripts/python/2_run_after_pwsh_script_pd.py
+_h2d_test/
+scripts/python/2_run_after_pwsh_script_pl.py
 scripts/R/2_run_after_pwsh_script_df.R
 scripts/_function_testing.ps1
 scripts/check_rain_availability.ps1

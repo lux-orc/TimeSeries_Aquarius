@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+
 import datetime
 import json
 from functools import reduce
@@ -7,14 +7,11 @@ from urllib import parse
 
 import numpy as np
 import pandas as pd
-import polars as pl
-import polars.selectors as cs
 import urllib3
 
 # Some display settings for numpy Array, Pandas and Polars DataFrame
 np.set_printoptions(precision=4, linewidth=94, suppress=True)
 pd.set_option('display.max_columns', None)
-pl.Config.set_tbl_cols(-1)
 
 
 def cp(s: Any = '', /, display: int = 0, fg: int = 39, bg: int = 48) -> str:
@@ -104,7 +101,7 @@ def is_numeric(x: Any, /) -> bool:
     return isinstance(x, (int, float, complex)) and not isinstance(x, bool)
 
 
-def _ts_valid_pd(ts: Any, /) -> 'str | None':
+def _ts_valid_pd(ts: Any, /) -> str:
     """Validate the input time series: `None` returned as passed"""
     if not isinstance(ts, (pd.Series, pd.DataFrame)):
         return '`ts` must be either pandas.Series or pandas.DataFrame!'
@@ -128,38 +125,24 @@ def _ts_valid_pd(ts: Any, /) -> 'str | None':
         return 'The Series must contain real numbers!'
 
 
-def _ts_valid_pl(ts: Any, /) -> 'str | None':
-    """Validate the input time series: `None` returned as valid"""
-    if isinstance(ts, pl.DataFrame):
-        if ts.width < 2:
-            return '`ts` must have one datetime column and the rest of numeric column(s)!'
-        if len(col_dt := ts.select(cs.temporal()).columns) != 1:
-            return '`ts` must have one datetime column!'
-        if ts[col_dt[0]].unique().len() != ts[col_dt[0]].len():
-            return f'The values in the temporal column {col_dt} must be unique!'
-        if not ts.sort(by=col_dt, descending=False).equals(ts):
-            return f'Column {col_dt} must be sorted in chronicle order!'
-        if ts.width != ts.select(cs.numeric()).width + 1:
-            return f'Apart from column {col_dt}, the rest column(s) must be numeric!'
-        return None
-    return '`ts` must be a polars.DataFrame!'
-
-
-def ts_step(ts: pl.DataFrame, minimum_time_step_in_second: int = 60) -> 'int | None':
+def ts_step(
+        ts: 'pd.DataFrame | pd.Series',
+        minimum_time_step_in_second: int = 60
+    ) -> 'int | None':
     """
     Identify the temporal resolution (in seconds) for a time series
 
     Parameters
     ----------
-    ts : pl.DataFrame
-        A Polars time series - 1st column as date/datetime, and other column(s) as numeric
+    ts : pd.DataFrame
+        A Pandas DataFrame indexed by time/date.
     minimum_time_step_in_second : int, default=60
         The minimum threshold of the time step that can be identified.
 
     Raises
     ------
     TypeError
-        When `_ts_valid_pd(ts)` returns a string.
+        When `_ts_valid_pd(ts) is not None` is False.
 
     Returns
     -------
@@ -168,110 +151,68 @@ def ts_step(ts: pl.DataFrame, minimum_time_step_in_second: int = 60) -> 'int | N
         * Any integer **above `0`**: time series is regular (step in secs).
         * **`None`**: contains no values or a single value.
     """
-    if err_str := _ts_valid_pl(ts):
-        raise TypeError(err_str)
-    col_dt = ts.select(cs.temporal()).columns[0]
-    col_v = ts.select(cs.numeric()).columns
-    x = ts.fill_nan(None).filter(~pl.all_horizontal(pl.col(col_v).is_null()))
-    if len(x) in {0, 1}:
+    if err_str := _ts_valid_pd(ts):
+        raise TypeError(cp(err_str, fg=35))
+    x = ts.dropna(axis=0, how='all')
+    if x.shape[0] in (0, 1):
         return None
-    diff_in_second = x.select(pl.col(col_dt)).to_series().diff(1).dt.total_seconds()[1:]
-    step_min = diff_in_second.filter(diff_in_second >= minimum_time_step_in_second).min()
-    return int(step_min) if (diff_in_second % step_min == 0).all() else -1
+    diff_in_second = (pd.Series(x.index).diff() / np.timedelta64(1, 's')).values[1:]
+    step_minimum = diff_in_second[diff_in_second >= minimum_time_step_in_second].min()
+    return int(step_minimum) if (diff_in_second % step_minimum == 0).all() else -1
 
 
-def is_ts_daily(ts: pl.DataFrame, /) -> bool:
-    """Check if a time series (in Polars DataFrame) is daily (day starts at 0 o'clock)"""
-    if err_str := _ts_valid_pl(ts):
-        raise TypeError(err_str)
-    col_dt = ts.select(cs.temporal()).columns[0]
-    if not pl.Date.is_(ts[col_dt].dtype):
-        time_no_hms = all([
-            ts[col_dt].dt.hour().eq(0).all(),
-            ts[col_dt].dt.minute().eq(0).all(),
-            ts[col_dt].dt.second().eq(0).all(),
-        ])
-        return (ts_step(ts) == 86400) and time_no_hms
-    return True
-
-
-def ts_pd2pl(ts: 'pd.Series | pd.DataFrame') -> pl.DataFrame:
-    """Convert the timeseries from Pandas DataFrame to Polars DataFrame"""
-    if (err_str := _ts_valid_pd(ts)) is None:
-        print('TimeSeries: Pandas DataFrame -> Polars DataFrame!')
-        ts_pl = pl.DataFrame(pd.DataFrame(ts).reset_index()).fill_nan(None)
-        if is_ts_daily(ts_pl):
-            col_dt = ts_pl.select(cs.temporal()).columns[0]
-            ts_pl = ts_pl.with_columns(pl.col(col_dt).cast(pl.Date).alias(col_dt))
-        return ts_pl
-    raise TypeError(err_str)
-
-
-def ts_pl2pd(ts: pl.DataFrame) -> pd.DataFrame:
-    """Convert the timeseries from Polars DataFrame to Pandas DataFrame"""
-    if (err_str := _ts_valid_pl(ts)) is None:
-        print('TimeSeries: Polars DataFrame -> Pandas DataFrame!')
-        ct = ts.select(cs.temporal()).columns[0]
-        cv = ts.select(pl.exclude(ct)).columns
-        return pd.DataFrame(
-            ts.select(cv),
-            columns=cv,
-            index=pd.Index(ts.select(ct).to_series(), name=ct)
-        )
-    raise TypeError(err_str)
-
-
-def na_ts_insert(ts: pl.DataFrame) -> pl.DataFrame:
+def na_ts_insert(ts: 'pd.DataFrame | pd.Series') -> pd.DataFrame:
     """
-    Pad Null value into a Polars DataFrame of a valid time series
+    Pad NaN value into a Timestamp-indexed DataFrame or Series
 
     Parameters
     ----------
-    ts : pl.DataFrame
-        A Polars DataFrame - 1st column as date/datetime, and rest column(s) as numeric
+    ts : pd.DataFrame | pd.Series
+        A Pandas DataFrame or pd.Series indexed by time/date.
 
     Returns
     -------
-    pl.DataFrame
-        The Null-padded DataFrame.
+    pd.DataFrame
+        The NaN-padded Timestamp-indexed Series/DataFrame.
 
     Notes
     -----
-        As for irregular time series, The empty-numeric-row-removed DataFrame returned.
+        * As for irregular time series, The empty-row-removed DataFrame returned.
+        * The attributes in `ts.attrs` is maintained after using it.
     """
-    col_dt = ts.select(cs.temporal()).columns[0]
-    col_v = ts.select(cs.numeric()).columns
-    r = ts.fill_nan(None).filter(~pl.all_horizontal(pl.col(col_v).is_null()))
-    if (step := ts_step(ts)) in {-1, None}:
-        return r
-    return r.sort(col_dt).upsample(time_column=col_dt, every=f'{step}s')
+    r = pd.DataFrame(ts).dropna(axis=0, how='all')
+    if (step := ts_step(ts)) in {-1, None}: return r
+    r = r.asfreq(freq=f'{step}s')
+    r.index.freq = None
+    r.attrs = ts.attrs
+    return r
 
 
 def hourly_2_daily(
-        hts: pl.DataFrame,
+        hts: 'pd.DataFrame | pd.Series',
         day_starts_at: int = 0,
-        agg: Callable = pl.mean,
-        prop: float = 1.,
-    ) -> pl.DataFrame:
+        agg: Callable = pd.Series.mean,
+        prop: float = 1.
+    ) -> pd.DataFrame:
     """
     Aggregate the hourly time series to daily time series using customised function
 
     Parameters
     ----------
-    hts : pl.DataFrame
+    hts : pd.DataFrame | pd.Series
         An hourly time series (for a single site)
     day_starts_at : int, optional, default=0
         What time (hour) a day starts - 0 o'clock by default.
         e.g., 9 means the output of daily time series by 9 o'clock!
-    agg : Callable, optional, default=pl.mean
-        Customised aggregation function (from Polars) - mean by default (`pl.mean`)
+    agg : Callable, optional, default=pd.Series.mean
+        Customised aggregation function - mean by default (`pd.Series.mean`)
     prop : float, optional, default=1
         The ratio of the available data (within a day range)
 
     Returns
     -------
-    pl.DataFrame
-        A daily time series (pl.DataFrame) with an extra column of site name
+    pd.DataFrame
+        A daily time series (pd.DataFrame) with an extra column of site name
 
     Raises
     ------
@@ -284,84 +225,60 @@ def hourly_2_daily(
         raise ValueError('`day_starts_at` must be an integer in [0, 23]!\n')
     if prop < 0 or prop > 1:
         raise ValueError('`prop` must be in [0, 1]!\n')
-    col_dt = hts.select(cs.temporal()).columns[0]
-    col_v = hts.select(cs.numeric()).columns[0]
-    r = (
-        hts.lazy()
-        .select([col_dt, col_v])
-        .fill_nan(None)
-        .select(
-            pl.col(col_dt)
-            .sub(datetime.timedelta(seconds=3600 * (1+day_starts_at)))
-            .dt.date()
-            .alias('Date'),
-            pl.col(col_v),
-        )
-        .with_columns(pl.col(col_v).count().over('Date').truediv(24).alias('Prop'))
-        .filter(pl.col('Prop').ge(prop))
-        .drop_nulls(subset=col_v)
-        .group_by('Date', maintain_order=True)
-        .agg(agg(col_v).alias(f'Agg_{agg.__name__}'))
+    hts_c = na_ts_insert(hts).dropna()
+    site = hts_c.columns[0]
+    date_new = (hts_c.index - pd.Timedelta(f'{3600 * (1+day_starts_at)}s')).date
+    u = pd.DataFrame({'Date': date_new, 'Value': hts_c.squeeze().values}).set_index('Date')
+    u['Prop'] = u.groupby('Date', sort=False)['Value'].transform('size') / 24
+    return (
+        u.query('Prop >= @prop')
+        .groupby('Date', sort=False)
+        .agg(Agg=('Value', agg))
+        .rename(columns={'Agg': f'Agg_{agg.__name__}'})
+        .pipe(na_ts_insert)
+        .assign(Site=site)
     )
-    return r.collect().pipe(na_ts_insert).with_columns(pl.lit(col_v).alias('Site'))
 
 
-def ts_info(ts: pl.DataFrame) -> 'pl.DataFrame | None':
+def ts_info(ts: 'pd.DataFrame | pd.Series') -> pd.DataFrame:
     """
-    Obtain the data availability of the input time series (Polars DataFrame)
+    Obtain the Timestamp-indexed time series (ts) data availability
 
     Parameters
     ----------
-    ts : pl.DataFrame
-        A Polars input time series.
+    ts : pd.DataFrame
+        A Pandas DataFrame indexed by time/date.
 
     Returns
     -------
-    pl.DataFrame | None
-        * Info on ['Site', 'Start', 'End', 'Length_yr', 'Completion_%'].
-        * As for time series of the irregular time steps, 'Completion_%' is ignored.
-        * `None` returned when there is no data in the input time series.
+    pd.DataFrame
+        Info on ['Site', 'Start', 'End', 'Length_yr', 'Completion_%'].
+        As for time series of irregular time step, 'Completion_%' column is ignored.
     """
-    if (con := ts_step(ts)) is None:
-        return None
-    col_dt = ts.select(cs.temporal()).columns
-    col_rest = ts.select(pl.exclude(col_dt)).columns
-    col_rest_ = [f'{i}_' for i in col_rest]
-    seconds_year = (days_year := 365.2422) * 24 * 3600
-    info = (
-        ts.lazy()
-        .rename(dict(zip(col_rest, col_rest_)))
-        .melt(id_vars=col_dt, variable_name='Site', value_name='V')
-        .filter(pl.col('V').fill_nan(None).is_not_null())
-        .group_by('Site', maintain_order=True).agg(
-            pl.col(col_dt).min().alias('Start'),
-            pl.col(col_dt).max().alias('End'),
-            pl.col('V').len().alias('n'),
-        )
-        .with_columns(
-            pl.col('End')
-            .sub(pl.col('Start'))
-            .dt.total_seconds()
-            .truediv(seconds_year)
-            .alias('Length_yr')
-        )
+    if (con := ts_step(ts)) is None: return None
+    if isinstance(ts, pd.Series): ts = ts.to_frame()
+    col_name = pd.Index(ts.columns.tolist(), dtype=str, name='Site')
+    col_name_ = [f'{i}_' for i in col_name]
+    empty_df = pd.DataFrame(index=pd.Index(col_name_, dtype=str, name='Site'))
+    ts_w = ts.reset_index()
+    ts_w.columns = ['Time'] + col_name_
+    ts_l = ts_w.melt(id_vars='Time', var_name='Site', value_name='V').dropna()
+    info = ts_l.groupby('Site', sort=False).agg(
+        Start=('Time', 'min'),
+        End=('Time', 'max'),
+        n=('V', pd.Series.count),
     )
-    info = (
-        pl.LazyFrame({'Site': col_rest_})
-        .join(info, on='Site', how='left', coalesce=True)
-        .with_columns(Site=pl.Series(col_rest))
+    d_yr = 365.2422
+    info['Length_yr'] = (info['End'] - info['Start']) / pd.Timedelta(f'{d_yr}D')
+    info = empty_df.join(info, how='left').set_index(col_name).reset_index()
+    if con == -1: return info.drop('n', axis=1)
+    step_day = con / (3600 * 24)
+    info = info.assign(
+        N=info['Length_yr'] * d_yr + step_day,
+        Length_yr=info['Length_yr'] + step_day / d_yr,
     )
-    if con == -1:
-        return info.drop('n').collect()
-    step_day = con / 86400
-    return (
-        info.with_columns(
-            (pl.col('Length_yr') * days_year + step_day).alias('N'),
-            (pl.col('Length_yr') + step_day / days_year),
-        )
-        .with_columns((pl.col('n') * step_day / pl.col('N') * 100).alias('Completion_%'))
-        .drop(['n', 'N'])
-    ).collect()
+    info['Completion_%'] = info['n'] * step_day / info['N'] * 100
+    return info.drop(columns=['n', 'N'])
 
 
 def get_AQ(
@@ -397,7 +314,7 @@ def get_uid(measurement: str, site: str) -> 'str | None':
         * `None`: the UniqueId cannot be located
     """
     if not site.strip():
-        raise ValueError("Provide a correct string value for 'Site'!\n")
+        raise ValueError(cp("Provide a correct string value for 'Site'!\n", fg=35))
     end_point = 'https://aquarius.orc.govt.nz/AQUARIUS/Publish/v2'
     url_desc = f'{end_point}/GetTimeSeriesDescriptionList'
     ms = f'{measurement}@{site}'
@@ -466,20 +383,25 @@ def get_ts_AQ(
         site: str,
         date_start: int = None,
         date_end: int = None
-    ) -> pl.DataFrame:
+    ) -> pd.DataFrame:
     """Get the time series for a single site specified by those defined in `get_url_AQ`"""
-    empty_df = pl.DataFrame(schema={'Timestamp': str, 'Value': float})
+    col_dtype = {'Timestamp': str, 'Value': float}
+    empty_df = pd.DataFrame(columns=col_dtype.keys()).astype(col_dtype)
     if (url := get_url_AQ(measurement, site, date_start, date_end)) is None:
-        print(f'\n[{measurement}@{site}] -> No data! An empty column [{site}] added!\n')
+        print(cp(
+            f'\n[{measurement}@{site}] -> No data! An empty column [{site}] added!\n',
+            fg=34
+        ))
         return empty_df
     r = get_AQ(url=url)
     if not (ld := json.loads(r.data.decode('utf-8')).get('Points', None)):
-        print(f'[{measurement}@{site}] -> No data over the chosen period!\n')
+        print(cp(f'[{measurement}@{site}] -> No data over the chosen period!\n', fg=34))
         return empty_df
-    return pl.DataFrame(ld).unnest('Value').rename({'Numeric': 'Value'}).with_columns([
-        pl.col('Timestamp').cast(str),
-        pl.col('Value').cast(float),
-    ])
+    return (
+        pd.json_normalize(ld, sep='_')
+        .rename(columns={'Value_Numeric': 'Value'})
+        .astype(col_dtype)
+    )
 
 
 def clean_24h_datetime(shit_datetime: str) -> str:
@@ -513,18 +435,15 @@ def _HWU_AQ(
         date_start: int = None,
         date_end: int = None,
         raw_data: bool = False
-    ) -> pl.DataFrame:
+    ) -> pd.DataFrame:
     """Get hourly rate for a single water meter (from Aquarius)"""
     ts_raw = get_ts_AQ('Flow.WMHourlyMean', site, date_start, date_end)
     if raw_data:
         return ts_raw
-    return ts_raw.select(
-        pl.col('Timestamp')
-        .map_elements(clean_24h_datetime, return_dtype=pl.Utf8)
-        .str.strptime(pl.Datetime, '%Y-%m-%dT%H:%M:%S')
-        .alias('Time'),
-        pl.col('Value').truediv(1e3).alias(site),
-    ).pipe(na_ts_insert)
+    return pd.DataFrame(
+        {site: ts_raw['Value'].values / 1e3},
+        index=ts_raw['Timestamp'].apply(clean_24h_datetime).pipe(pd.to_datetime),
+    ).rename_axis(index='Time').pipe(na_ts_insert)
 
 
 def _DWU_AQ(
@@ -532,19 +451,15 @@ def _DWU_AQ(
         date_start: int = None,
         date_end: int = None,
         raw_data: bool = False
-    ) -> pl.DataFrame:
+    ) -> pd.DataFrame:
     """Get daily rate for a single water meter (from Aquarius)"""
     ts_raw = get_ts_AQ('Abstraction Volume.WMDaily', site, date_start, date_end)
     if raw_data:
         return ts_raw
-    return ts_raw.select(
-        pl.col('Timestamp')
-        .map_elements(clean_24h_datetime, return_dtype=pl.Utf8)
-        .str.slice(0, 10)
-        .str.strptime(pl.Date, '%Y-%m-%d')
-        .alias('Date'),
-        pl.col('Value').truediv(86400).alias(site),
-    ).pipe(na_ts_insert)
+    return pd.DataFrame(
+        {site: ts_raw['Value'].values / 86400},
+        index=ts_raw['Timestamp'].apply(clean_24h_datetime).pipe(pd.to_datetime)
+    ).rename_axis(index='Date').pipe(na_ts_insert)
 
 
 def hourly_WU_AQ(
@@ -552,7 +467,7 @@ def hourly_WU_AQ(
         date_start: int = None,
         date_end: int = None,
         raw_data: bool = False,
-    ) -> pl.DataFrame:
+    ) -> pd.DataFrame:
     """
     A wrapper of getting hourly rate for multiple water meters (from Aquarius)
 
@@ -571,23 +486,19 @@ def hourly_WU_AQ(
 
     Returns
     -------
-    pl.DataFrame
+    pd.DataFrame
         A DataFrame of hourly abstraction
     """
     if isinstance(siteList, str):
         siteList = [siteList]
     siteList = list(dict.fromkeys(siteList))
     if raw_data:
-        d = {
-            site: _HWU_AQ(site, date_start, date_end, True).with_columns(
-                pl.lit(site).alias('Site')
-            ) for site in siteList
-        }
-        return pl.concat(d.values(), how='vertical').select('Site', 'Timestamp', 'Value')
+        d = {site: _HWU_AQ(site, date_start, date_end, True) for site in siteList}
+        for k, v in d.items():
+            v.insert(0, 'Site', k)
+        return pd.concat(d.values(), axis=0, join='outer', ignore_index=True)
     lst = [_HWU_AQ(site, date_start, date_end, False) for site in siteList]
-    return na_ts_insert(
-        reduce(lambda a, b: a.join(b, on='Time', how='full', coalesce=True), lst)
-    )
+    return reduce(lambda a, b: a.join(b, how='outer'), lst).pipe(na_ts_insert)
 
 
 def daily_WU_AQ(
@@ -595,7 +506,7 @@ def daily_WU_AQ(
         date_start: int = None,
         date_end: int = None,
         raw_data: bool = False,
-    ) -> pl.DataFrame:
+    ) -> pd.DataFrame:
     """
     A wrapper of getting daily rate for multiple water meters (from Aquarius)
 
@@ -614,20 +525,16 @@ def daily_WU_AQ(
 
     Returns
     -------
-    pl.DataFrame
+    pd.DataFrame
         A DataFrame of daily abstraction
     """
     if isinstance(siteList, str):
         siteList = [siteList]
     siteList = list(dict.fromkeys(siteList))
     if raw_data:
-        d = {
-            site: _DWU_AQ(site, date_start, date_end, True).with_columns(
-                pl.lit(site).alias('Site')
-            ) for site in siteList
-        }
-        return pl.concat(d.values(), how='vertical').select('Site', 'Timestamp', 'Value')
+        d = {site: _DWU_AQ(site, date_start, date_end, True) for site in siteList}
+        for k, v in d.items():
+            v.insert(0, 'Site', k)
+        return pd.concat(d.values(), axis=0, join='outer', ignore_index=True)
     lst = [_DWU_AQ(site, date_start, date_end, False) for site in siteList]
-    return na_ts_insert(
-        reduce(lambda a, b: a.join(b, on='Date', how='full', coalesce=True), lst)
-    )
+    return reduce(lambda a, b: a.join(b, how='outer'), lst).pipe(na_ts_insert)
