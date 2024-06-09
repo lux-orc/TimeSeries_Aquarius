@@ -1,6 +1,6 @@
 # Purpose
 
-To download the time series data from Aquarius.
+To download the time series data from Aquarius and organise the data in `DataFrame`s.
 
 # Requirements
 
