@@ -176,3 +176,5 @@ scripts/_function_testing.ps1
 scripts/check_rain_availability.ps1
 scripts/daily_rainfall_for_frequency_analysis.ps1
 scripts/tmp.ps1
+scripts/tmp.py
+scripts/tmp.R
