@@ -710,7 +710,7 @@
     "ET776": "Manuherikia at Hamiltons downstream",
     "EU064": "Owhiro Stream at Burns Street",
     "EU060": "Owaka at Purekireka",
-    "EU371": "Taieri at Creamery Road bridge",
+    "EU371": "Taieri at Creamery Road",
     "EU369": "Taieri at Allanton Bridge",
     "EU445": "Trotters Creek at Mathesons",
     "EU381": "Taieri at Linnburn Runs Road",
@@ -9432,7 +9432,6 @@
     "GT547": "Port Otago MP1 Stormwater Discharge",
     "GT545": "Port Otago Stormwater Discharge",
     "GT544": "Sotheast Studholme Road and Wanaka Mt Aspiring Road Residential Development Discharge",
-    "GT551": "Taieri at Creamery Road",
     "GT552": "Taieri at Rail Trail Bridge",
     "RM20.337.02": "RM20.337.02",
     "GT553": "Waikouaiti Landfill at Hawksbury",
@@ -9498,5 +9497,11 @@
     "GT594": "Makarea Lime Kiln Air Discharge",
     "2001.482": "2001.482.V1",
     "RM23.646.01": "RM23.646.01",
-    "RM23.488.02": "RM23.488.02"
+    "RM23.488.02": "RM23.488.02",
+    "CC16/0114": "School Rd",
+    "CC16/0115": "School Rd Deep",
+    "GT596": "Green Island Landfill Site E Pond",
+    "GT595": "Green Island Landfill Site W Pond",
+    "CC15/0128": "Maniototo Rd deep",
+    "2007.312": "2007.312"
 }

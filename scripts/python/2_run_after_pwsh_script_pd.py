@@ -146,13 +146,11 @@ for path_folder in path_folders:
         .sort_values(name_idx)
         .set_index(name_idx)
         .pipe(fpd.na_ts_insert)
-        .reset_index()
-        .astype({name_idx: str})
     )
 
     # Save the wide format
     parquet_2_save_wide = path_out / f'{folder_name}_wide.parquet'
-    ts_w.to_parquet(parquet_2_save_wide)
+    ts_w.reset_index().astype({name_idx: str}).to_parquet(parquet_2_save_wide)
     print(
         '\t'
         + fpd.cp(f'{parquet_2_save.relative_to(path)}', fg=36)

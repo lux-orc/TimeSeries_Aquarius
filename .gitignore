@@ -173,7 +173,6 @@ _h2d_test/
 scripts/python/2_run_after_pwsh_script_pl.py
 scripts/R/2_run_after_pwsh_script_df.R
 scripts/_function_testing.ps1
-scripts/daily_rainfall_for_frequency_analysis.ps1
 scripts/tmp.ps1
 scripts/tmp.py
 scripts/tmp.R
