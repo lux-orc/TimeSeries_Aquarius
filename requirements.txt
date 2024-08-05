@@ -1,5 +1,5 @@
 ipython==8.26.0
 pandas==2.2.2
-polars==1.2.0  # This is optional!
+polars==1.2.1  # This is optional!
 pyarrow==17.0.0
 urllib3==2.2.2
