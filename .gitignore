@@ -164,7 +164,7 @@ cython_debug/
 _tools/__pycache__/
 .idea/
 .Rproj.user/
-./_ts_AQ.Rproj
+_ts_AQ.Rproj
 _tools/fun_s_pl.py
 _tools/ReportRunner.exe
 _tools/ReportRunner.Readme.html
