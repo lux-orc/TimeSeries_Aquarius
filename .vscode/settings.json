@@ -1,0 +1,9 @@
+{
+    "python.terminal.launchArgs": [
+        "-m",
+        "IPython",
+        "--no-autoindent",
+        "--simple-prompt"
+    ],
+    "powershell.cwd": "scripts"
+}
