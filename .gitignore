@@ -177,3 +177,4 @@ scripts/_function_testing.ps1
 scripts/tmp.ps1
 scripts/tmp.py
 scripts/tmp.R
+scripts/tmp.sql
