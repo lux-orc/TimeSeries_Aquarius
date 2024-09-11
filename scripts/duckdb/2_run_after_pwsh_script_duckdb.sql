@@ -1,6 +1,10 @@
 
--- Notes:
+-- Notes (limitations):
 --     * Suggests use Uniqueid in the PowerShell script obtaining time series
+--     * The 2nd column in each CSV file is following [Parameter]@[Plate]. Therefore,
+--         NO way to request data on the same uid for different temporal resolutions.
+--         i.e., the same [Parameter] and the same [Plate] but different temporal resolutions
+--         will NOT work! Works when the [Parameter]s are different!
 
 
 duckdb
@@ -14,10 +18,10 @@ create or replace table tmp as
         )
     from read_csv(
         'out/**/*.csv',
-        skip=11,
-        types={'TimeStamp': 'TIMESTAMP'},
-        union_by_name=true,
-        filename=true
+        skip = 11,
+        types = {'TimeStamp': 'TIMESTAMP'},
+        union_by_name = true,
+        filename = true
     )
 ;
 
@@ -35,7 +39,7 @@ create or replace table tmp_long as
     select
         TimeStamp,
         Value,
-        split_part(ID, '@', 2) as Location,
+        split_part(ID, '@', -1) as Location,
         split_part(ID, '@', 1) as Parameter,
         filename as uid
     from cte
@@ -69,14 +73,15 @@ create or replace table df_long as
     from tmp_long t
     left join plate pl on t.Location = pl.Location
     left join param pa on t.Parameter = pa.Parameter
-    order by Site, TimeStamp
+    order by uid, TimeStamp  -- DO NOT `order by Site`!
 ;
 -- from df_long;
 
 
--- Export the frame (in long format)
+-- Export the frame (in long format, TimeStamp column as VARCHAR)
 copy (
     select * replace(strftime(TimeStamp, '%Y-%m-%d %H:%M:%S') as TimeStamp)
     from df_long
-) to 'out/long_duckdb.parquet';
+) to 'out/long_duckdb.parquet'
+;
 
