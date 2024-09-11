@@ -10,7 +10,6 @@ duckdb
 create or replace table tmp as
     select
         * replace(
-            -- replace(split_part(lower(filename), '\', -1), '.csv', '') as filename
             parse_filename(filename, true, 'system') as filename
         )
     from read_csv(
