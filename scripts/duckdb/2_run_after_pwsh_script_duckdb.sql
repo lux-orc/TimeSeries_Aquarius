@@ -13,9 +13,7 @@ duckdb
 -- Read all CSV files in the <out> folder
 create or replace table tmp as
     select
-        * replace(
-            parse_filename(filename, true, 'system') as filename
-        )
+        * replace(parse_filename(filename, true, 'system') as filename)
     from read_csv(
         'out/**/*.csv',
         skip = 11,
