@@ -47,7 +47,8 @@ create or replace table tmp_long as
 -- Read the JSON files ('plate_info.json', 'plate_info.json') from <info> folder
 create or replace table plate as
     with id_site as (
-        select * as id_site from 'info/plate_info.json'
+        select * as id_site
+        from 'info/plate_info.json'
     )
     select
         unnest(map_keys(id_site)) as Location,
@@ -56,7 +57,8 @@ create or replace table plate as
 ;
 create or replace table param as
     with param_unit as (
-        select * as param_unit from 'info/param_info.json'
+        select * as param_unit
+        from 'info/param_info.json'
     )
     select
         unnest(map_keys(param_unit)) as Parameter,
