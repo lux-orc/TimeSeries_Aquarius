@@ -2,12 +2,12 @@
 -- Notes (limitations):
 --     * Suggests use [uid] in the PowerShell script obtaining time series
 --     * The 2nd column in each CSV file is following [Parameter]@[Plate]. Therefore,
---         NO way to request data on the same uid for different temporal resolutions.
---         i.e., the same [Parameter] and the same [Plate] but different temporal resolutions
---         will NOT work! Works when the [Parameter]s are different!
+--       NO way to request data on the same uid for different temporal resolutions.
+--       i.e., the same [Parameter] and the same [Plate] but different temporal resolutions
+--       will NOT work! Works when the [Parameter]s are different!
 
 
-duckdb
+-- duckdb
 
 
 -- Read all CSV files in the <out> folder
@@ -76,6 +76,7 @@ create or replace table df_long as
     order by uid, TimeStamp  -- DO NOT `order by Site`!
 ;
 -- from df_long;
+-- show tables;
 
 
 -- Export the frame (in long format, TimeStamp column as VARCHAR)
