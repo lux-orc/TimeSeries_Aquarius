@@ -10,6 +10,40 @@
 -- duckdb
 
 
+-- Read all CSV files in the <out> folder
+create or replace table tmp as
+    select
+        * replace(parse_filename(filename, true, 'system') as filename)
+    from read_csv(
+        'out/**/*.csv',
+        skip = 11,
+        types = {'TimeStamp': 'TIMESTAMP'},
+        union_by_name = true,
+        filename = true
+    )
+;
+
+
+-- Create a frame `tmp_long` (in long format)
+create or replace table tmp_long as
+    with cte as (
+        unpivot tmp
+        on columns(* exclude(TimeStamp, filename))
+        into
+            name ID
+            value Value
+        order by ID, TimeStamp
+    )
+    select
+        TimeStamp,
+        Value,
+        split_part(ID, '@', -1) as Location,
+        split_part(ID, '@', 1) as Parameter,
+        filename as uid
+    from cte
+;
+
+
 -- Read the JSON files ('plate_info.json', 'plate_info.json') from <info> folder
 create or replace table plate as
     with id_site as (
@@ -35,38 +69,6 @@ create or replace table param as
 
 -- Create a long format frame before save
 create or replace table df_long as
-    -- Read all CSV files in the <out> folder, recursively -> `tmp`
-    with tmp as (
-        select
-            * replace(parse_filename(filename, true, 'system') as filename)
-        from read_csv(
-            'out/**/*.csv',
-            skip = 11,
-            types = {'TimeStamp': 'TIMESTAMP'},
-            union_by_name = true,
-            filename = true
-        )
-    ),
-    -- Create a temporary frame (in long format)
-    cte as (
-        unpivot tmp
-        on columns(* exclude(TimeStamp, filename))
-        into
-            name ID
-            value Value
-        order by ID, TimeStamp
-    ),
-    -- Split column [ID] into columns [Location] and [Parameter]
-    tmp_long as (
-        select
-            TimeStamp,
-            Value,
-            split_part(ID, '@', -1) as Location,
-            split_part(ID, '@', 1) as Parameter,
-            filename as uid
-        from cte
-    )
-    -- Add the extra information - Unit, and Site names
     select t.TimeStamp, t.Value, pa.Unit, t.Parameter, pl.*, t.uid
     from tmp_long t
     left join plate pl on t.Location = pl.Location

@@ -165,14 +165,11 @@ _tools/__pycache__/
 .idea/
 .Rproj.user/
 _ts_AQ.Rproj
-_tools/fun_s_pl.py
 _tools/ReportRunner.exe
 _tools/ReportRunner.Readme.html
 out/*.parquet
 out/csv/
 _h2d_test/
-scripts/python/2_run_after_pwsh_script_pl.py
-scripts/R/2_run_after_pwsh_script_df.R
 scripts/_function_testing.ps1
 scripts/tmp.ps1
 scripts/tmp.py

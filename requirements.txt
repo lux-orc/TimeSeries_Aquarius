@@ -1,6 +1,6 @@
-duckdb==1.1.0  # This is optional!
+duckdb==1.1.0
 ipython==8.27.0
 pandas==2.2.2
-polars==1.7.0  # This is optional!
+polars==1.7.1
 pyarrow==17.0.0
-urllib3==2.2.2
+urllib3==2.2.3
