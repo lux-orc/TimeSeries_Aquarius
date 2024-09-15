@@ -34,7 +34,7 @@ create or replace table param as
 
 
 -- Create a long format frame before save
-create or replace table df_long as
+create or replace table ts_long as
     -- Read all CSV files in the <out> folder, recursively -> `tmp`
     with tmp as (
         select
@@ -75,17 +75,22 @@ create or replace table df_long as
 ;
 
 
+-- CAST the [TimeStamp] from TIMESTAMP to VARCHAR (optional)
+create or replace table df_long as
+    select * replace(strftime(TimeStamp, '%Y-%m-%d %H:%M:%S') as TimeStamp)
+    from ts_long
+;
+
+
 -- show tables;
 
--- from df_long;
+-- from ts_long;
 -- from plate;
 -- from param;
 
 
--- Export the frame (in long format, TimeStamp column as VARCHAR)
-copy (
-    select * replace(strftime(TimeStamp, '%Y-%m-%d %H:%M:%S') as TimeStamp)
-    from df_long
-) to 'out/long_duckdb.parquet'
-;
+-- copy df_long to 'out/long_duckdb.parquet';
+-- from df_long;
+EXPORT DATABASE 'out/long_duckdb' (FORMAT PARQUET);
+-- IMPORT DATABASE 'out/long_duckdb';
 
