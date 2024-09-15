@@ -87,8 +87,8 @@ create or replace table df_long as
 -- from param limit 5;
 
 
--- -- copy df_long to 'out/df_long.parquet';
-EXPORT DATABASE 'out/long_duckdb' (FORMAT PARQUET);
+copy df_long to 'out/df_long.parquet';
+-- EXPORT DATABASE 'out/long_duckdb' (FORMAT PARQUET);
 -- IMPORT DATABASE 'out/long_duckdb';
 -- show tables;
 
