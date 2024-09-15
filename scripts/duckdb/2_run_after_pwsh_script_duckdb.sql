@@ -34,7 +34,7 @@ create or replace table param as
 
 
 -- Create a long format frame before save
-create or replace table ts_long as
+create or replace table df_long as
     -- Read all CSV files in the <out> folder, recursively -> `tmp`
     with tmp as (
         select
@@ -65,18 +65,16 @@ create or replace table ts_long as
             split_part(ID, '@', 1) as Parameter,
             filename as uid
         from cte
-    )
+    ),
     -- Add the extra information - Unit, and Site names
-    select t.TimeStamp, t.Value, pa.Unit, t.Parameter, pl.*, t.uid
-    from tmp_long t
-    left join plate pl on t.Location = pl.Location
-    left join param pa on t.Parameter = pa.Parameter
-    order by uid, TimeStamp  -- DO NOT `order by Site`!
-;
-
-
--- CAST the [TimeStamp] from TIMESTAMP to VARCHAR (optional)
-create or replace table df_long as
+    ts_long as (
+        select t.TimeStamp, t.Value, pa.Unit, t.Parameter, pl.*, t.uid
+        from tmp_long t
+        left join plate pl on t.Location = pl.Location
+        left join param pa on t.Parameter = pa.Parameter
+        order by t.Parameter, Site, TimeStamp
+    )
+    -- CAST the [TimeStamp] from TIMESTAMP to VARCHAR (optional)
     select * replace(strftime(TimeStamp, '%Y-%m-%d %H:%M:%S') as TimeStamp)
     from ts_long
 ;
@@ -84,13 +82,13 @@ create or replace table df_long as
 
 -- show tables;
 
--- from ts_long;
--- from plate;
--- from param;
-
-
--- copy df_long to 'out/long_duckdb.parquet';
 -- from df_long;
+-- from plate limit 5;
+-- from param limit 5;
+
+
+-- -- copy df_long to 'out/df_long.parquet';
 EXPORT DATABASE 'out/long_duckdb' (FORMAT PARQUET);
 -- IMPORT DATABASE 'out/long_duckdb';
+-- show tables;
 
