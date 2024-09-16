@@ -10,29 +10,6 @@
 -- duckdb
 
 
--- Read the JSON files ('plate_info.json', 'plate_info.json') from <info> folder
-create or replace table plate as
-    with id_site as (
-        select * as id_site
-        from 'info/plate_info.json'
-    )
-    select
-        unnest(map_keys(id_site)) as Location,
-        unnest(map_values(id_site)) as Site
-    from id_site
-;
-create or replace table param as
-    with param_unit as (
-        select * as param_unit
-        from 'info/param_info.json'
-    )
-    select
-        unnest(map_keys(param_unit)) as Parameter,
-        unnest(map_values(param_unit)) as Unit
-    from param_unit
-;
-
-
 -- Create a long format frame before save
 create or replace table df_long as
     -- Read all CSV files in the <out> folder, recursively -> `tmp`
@@ -66,12 +43,32 @@ create or replace table df_long as
             filename as uid
         from cte
     ),
+    -- Read the JSON files ('plate_info.json') from <info> folder
+    plates as (
+        select
+            unnest(map_keys(id_site)) as Location,
+            unnest(map_values(id_site)) as Site
+        from (
+            select * as id_site
+            from 'info/plate_info.json'
+        )
+    ),
+    -- Read the JSON files ('plate_info.json') from <info> folder
+    params as (
+        select
+            unnest(map_keys(param_unit)) as Parameter,
+            unnest(map_values(param_unit)) as Unit
+        from (
+            select * as param_unit
+            from 'info/param_info.json'
+        )
+    ),
     -- Add the extra information - Unit, and Site names
     ts_long as (
         select t.TimeStamp, t.Value, pa.Unit, t.Parameter, pl.*, t.uid
         from tmp_long t
-        left join plate pl on t.Location = pl.Location
-        left join param pa on t.Parameter = pa.Parameter
+        left join plates pl on t.Location = pl.Location
+        left join params pa on t.Parameter = pa.Parameter
         order by t.Parameter, Site, TimeStamp
     )
     -- CAST the [TimeStamp] from TIMESTAMP to VARCHAR (optional)
@@ -81,10 +78,7 @@ create or replace table df_long as
 
 
 -- show tables;
-
 -- from df_long;
--- from plate limit 5;
--- from param limit 5;
 
 
 copy df_long to 'out/df_long.parquet';
