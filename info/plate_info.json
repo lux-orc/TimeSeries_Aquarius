@@ -1501,7 +1501,7 @@
     "FL492": "Mill Creek at Ayrburn Farm",
     "FL493": "Alpha Burn at Wanaka Mt Aspiring Road 1700m Upstream",
     "FM626": "Upper Tomahawk Lagoon at Ocean Grove Domain Hall",
-    "FL543": "Neds Creek at u/s Matakanui Station Upper Race Take",
+    "FL543": "Neds Creek upstream of Matakanui Station Upper Race Take",
     "FM628": "Lagoon Creek at Upper Tomahawk Lagoon Confluence",
     "FM627": "Upper Tomahawk Lagoon at 41 Peg Track",
     "FM630": "Lagoon Creek at Upper Tomahawk Lagoon Confluence Upstream Top site",
@@ -1730,7 +1730,7 @@
     "G45/0184": "G45/0184",
     "G45/0176": "G45/0176",
     "G45/0188": "G45/0188",
-    "G45/0255": "Koi Flat Road Pomohaka",
+    "G45/0225": "Koi Flat Road Pomohaka",
     "G46/0104": "G46/0104",
     "G46/0101": "G46/0101",
     "G46/0110": "G46/0110",
@@ -9710,5 +9710,6 @@
     "WM1688": "WM1688",
     "WM1668": "WM1668",
     "WM1669": "WM1669",
-    "RM22.045.01": "RM22.045.01"
+    "RM22.045.01": "RM22.045.01",
+    "2006.323": "2006.323"
 }
