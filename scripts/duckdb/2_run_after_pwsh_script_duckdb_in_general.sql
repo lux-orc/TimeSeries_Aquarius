@@ -1,5 +1,29 @@
 
--- duckdb
+duckdb
+
+
+-- Read the JSON files ('plate_info.json') from <info> folder
+create or replace table plates as
+    with id_site as (
+        select * as id_site
+        from 'info/plate_info.json'
+    )
+    select
+        unnest(map_keys(id_site)) as Location,
+        unnest(map_values(id_site)) as Site
+    from id_site
+;
+-- Read the JSON files ('plate_info.json') from <info> folder
+create or replace table params as
+    with param_unit as (
+        select * as param_unit
+        from 'info/param_info.json'
+    )
+    select
+        unnest(map_keys(param_unit)) as Parameter,
+        unnest(map_values(param_unit)) as Unit
+    from param_unit
+;
 
 
 -- Create a long format frame before save
@@ -34,26 +58,6 @@ create or replace table df_long as
             parse_filename(filename, true, 'system') as uid
         from cte
     ),
-    -- Read the JSON files ('plate_info.json') from <info> folder
-    plates as (
-        select
-            unnest(map_keys(id_site)) as Location,
-            unnest(map_values(id_site)) as Site
-        from (
-            select * as id_site
-            from 'info/plate_info.json'
-        )
-    ),
-    -- Read the JSON files ('plate_info.json') from <info> folder
-    params as (
-        select
-            unnest(map_keys(param_unit)) as Parameter,
-            unnest(map_values(param_unit)) as Unit
-        from (
-            select * as param_unit
-            from 'info/param_info.json'
-        )
-    ),
     -- Add the extra information - Unit, and Site names
     ts_long as (
         select t.TimeStamp, t.Value, pa.Unit, t.Parameter, pl.*, t.folder, t.uid
@@ -70,27 +74,36 @@ create or replace table df_long as
 
 
 -- Show some summary about the merged data
-select
-    folder, Site,
-    any_value(Location) as Location,
-    any_value(Unit) as Unit,
-    min(TimeStamp::TIMESTAMP) as Start,
-    max(TimeStamp::TIMESTAMP) as End,
-    avg(Value).round(3) as Mean,
-    stddev_samp(Value).round(3) as Std,  -- Should use the sample standard deviation
-    min(Value).round(3) as Min,
-    -- arg_min(TimeStamp::TIMESTAMP, Value) as Time_min,
-    quantile_cont(Value, .25).round(3) as "25%",
-    quantile_cont(Value, .50).round(3) as "50%",
-    quantile_cont(Value, .75).round(3) as "75%",
-    max(Value).round(3) as Max,
-    -- arg_max(TimeStamp::TIMESTAMP, Value) as Time_max,
-from df_long
-group by folder, Site
-order by folder, Site
-;
+copy (
+    select
+        any_value(Location) as Location,
+        Site,
+        folder,
+        any_value(Unit) as Unit,
+        min(TimeStamp::TIMESTAMP) as Start,
+        max(TimeStamp::TIMESTAMP) as End,
+        avg(Value).round(3) as Mean,
+        -- stddev_samp(Value).round(3) as Std,  -- Should use the sample standard deviation
+        min(Value).round(3) as Min,
+        arg_min(TimeStamp::TIMESTAMP, Value) as Time_min,
+        -- quantile_cont(Value, .25).round(3) as "25%",
+        quantile_cont(Value, .50).round(3) as "50%",
+        -- quantile_cont(Value, .75).round(3) as "75%",
+        max(Value).round(3) as Max,
+        arg_max(TimeStamp::TIMESTAMP, Value) as Time_max,
+    from df_long
+    group by folder, Site
+    order by folder, Site
+) to 'out/data_summary.tsv' (FORMAT CSV, DELIMITER '\t', HEADER);
+
+
+-- show tables;
 
 
 -- Export the obtained data to a PARQUET file
 copy df_long to 'out/df_long.parquet';
 
+
+-- EXPORT DATABASE 'out/long_duckdb' (FORMAT PARQUET);
+-- IMPORT DATABASE 'out/long_duckdb';
+-- show tables;
