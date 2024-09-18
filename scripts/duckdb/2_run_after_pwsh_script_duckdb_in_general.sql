@@ -71,13 +71,14 @@ create or replace table df_long as
 
 -- Show some summary about the merged data
 select
-    folder, Site,
+    folder,
+    Site,
     any_value(Location) as Location,
     any_value(Unit) as Unit,
     min(TimeStamp::TIMESTAMP) as Start,
     max(TimeStamp::TIMESTAMP) as End,
     avg(Value).round(3) as Mean,
-    stddev_samp(Value).round(3) as Std,
+    stddev_samp(Value).round(3) as Std,  -- Should use the sample standard deviation
     min(Value).round(3) as Min,
     -- arg_min(TimeStamp::TIMESTAMP, Value) as Time_min,
     quantile_cont(Value, .25).round(3) as "25%",
