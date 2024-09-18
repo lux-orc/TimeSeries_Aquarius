@@ -172,7 +172,7 @@ out/csv/
 out/long_duckdb/
 _h2d_test/
 scripts/_function_testing.ps1
-scripts/duckdb/_making_progress.sql
+scripts/duckdb/_making_progress_limitations.sql
 scripts/duckdb/_making_progress_in_general.sql
 scripts/tmp.ps1
 scripts/tmp.py
