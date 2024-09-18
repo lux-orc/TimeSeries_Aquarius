@@ -1,12 +1,4 @@
 
--- Notes (limitations):
---     * Suggests use [uid] in the PowerShell script obtaining time series
---     * The 2nd column in each CSV file is following [Parameter]@[Plate]. Therefore,
---       NO way to request data on the same uid for different temporal resolutions.
---       i.e., the same [Parameter] and the same [Plate] but different temporal resolutions
---       will NOT work! Works when the [Parameter]s are different!
-
-
 -- duckdb
 
 
@@ -14,8 +6,7 @@
 create or replace table df_long as
     -- Read all CSV files in the <out> folder, recursively -> `tmp`
     with tmp as (
-        select
-            * replace(parse_filename(filename, true, 'system') as filename)
+        select *
         from read_csv(
             'out/**/*.csv',
             skip = 11,
@@ -38,9 +29,10 @@ create or replace table df_long as
         select
             TimeStamp,
             Value,
+            parse_path(filename, 'system')[-2] as folder,
             split_part(ID, '@', -1) as Location,
             split_part(ID, '@', 1) as Parameter,
-            filename as uid
+            parse_filename(filename, true, 'system') as uid
         from cte
     ),
     -- Read the JSON files ('plate_info.json') from <info> folder
@@ -65,11 +57,11 @@ create or replace table df_long as
     ),
     -- Add the extra information - Unit, and Site names
     ts_long as (
-        select t.TimeStamp, t.Value, pa.Unit, t.Parameter, pl.*, t.uid
+        select t.TimeStamp, t.Value, pa.Unit, t.Parameter, pl.*, t.folder, t.uid
         from tmp_long t
         left join plates pl on t.Location = pl.Location
         left join params pa on t.Parameter = pa.Parameter
-        order by t.Parameter, Site, TimeStamp
+        order by folder, Site, TimeStamp
     )
     -- CAST the [TimeStamp] from TIMESTAMP to VARCHAR (optional)
     select * replace(strftime(TimeStamp, '%Y-%m-%d %H:%M:%S') as TimeStamp)
