@@ -18,7 +18,7 @@ create or replace table df_long as
     -- Create a temporary frame (in long format)
     cte as (
         unpivot tmp
-        on columns(* exclude(TimeStamp, filename))
+        on columns(* exclude (TimeStamp, filename))
         into
             name ID
             value Value
@@ -62,7 +62,7 @@ create or replace table df_long as
         left join params pa on t.Parameter = pa.Parameter
     )
     -- CAST the [TimeStamp] from TIMESTAMP to VARCHAR (optional)
-    select * replace(strftime(TimeStamp, '%Y-%m-%d %H:%M:%S') as TimeStamp)
+    select * replace (strftime(TimeStamp, '%Y-%m-%d %H:%M:%S') as TimeStamp)
     from ts_long
     -- Try not to use `order by` clause in CTE/subquery - use it in the main query instead!
     order by folder, Site, TimeStamp

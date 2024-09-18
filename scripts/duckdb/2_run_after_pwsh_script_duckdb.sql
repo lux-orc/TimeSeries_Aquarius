@@ -15,7 +15,7 @@ create or replace table df_long as
     -- Read all CSV files in the <out> folder, recursively -> `tmp`
     with tmp as (
         select
-            * replace(parse_filename(filename, true, 'system') as filename)
+            * replace (parse_filename(filename, true, 'system') as filename)
         from read_csv(
             'out/**/*.csv',
             skip = 11,
@@ -27,7 +27,7 @@ create or replace table df_long as
     -- Create a temporary frame (in long format)
     cte as (
         unpivot tmp
-        on columns(* exclude(TimeStamp, filename))
+        on columns(* exclude (TimeStamp, filename))
         into
             name ID
             value Value
@@ -72,7 +72,7 @@ create or replace table df_long as
         order by t.Parameter, Site, TimeStamp
     )
     -- CAST the [TimeStamp] from TIMESTAMP to VARCHAR (optional)
-    select * replace(strftime(TimeStamp, '%Y-%m-%d %H:%M:%S') as TimeStamp)
+    select * replace (strftime(TimeStamp, '%Y-%m-%d %H:%M:%S') as TimeStamp)
     from ts_long
 ;
 
