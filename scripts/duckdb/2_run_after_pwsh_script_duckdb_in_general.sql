@@ -72,18 +72,19 @@ create or replace table df_long as
 -- Show some summary about the merged data
 select
     folder, Site,
+    any_value(Unit) as Unit,
     any_value(Location) as Location,
     min(TimeStamp::TIMESTAMP) as Start,
     max(TimeStamp::TIMESTAMP) as End,
     avg(Value).round(3) as Mean,
     stddev_pop(Value).round(3) as Std,
     min(Value).round(3) as Min,
-    arg_min(TimeStamp::TIMESTAMP, Value) as Time_min,
+    -- arg_min(TimeStamp::TIMESTAMP, Value) as Time_min,
     quantile_cont(Value, .25).round(3) as "25%",
-    quantile_cont(Value, .5).round(3) as "50%",
+    quantile_cont(Value, .50).round(3) as "50%",
     quantile_cont(Value, .75).round(3) as "75%",
     max(Value).round(3) as Max,
-    arg_max(TimeStamp::TIMESTAMP, Value) as Time_max
+    -- arg_max(TimeStamp::TIMESTAMP, Value) as Time_max
 from df_long
 group by folder, Site
 order by folder, Site
