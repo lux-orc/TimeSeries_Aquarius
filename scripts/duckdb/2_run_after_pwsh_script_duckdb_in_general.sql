@@ -71,8 +71,7 @@ create or replace table df_long as
 
 -- Show some summary about the merged data
 select
-    folder,
-    Site,
+    folder, Site,
     any_value(Location) as Location,
     any_value(Unit) as Unit,
     min(TimeStamp::TIMESTAMP) as Start,
