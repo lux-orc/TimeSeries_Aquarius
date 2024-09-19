@@ -1,5 +1,6 @@
 
-duckdb
+duckdb out/df_long.duckdb
+-- duckdb
 
 
 -- Read the JSON files ('plate_info.json') from <info> folder
@@ -107,3 +108,5 @@ copy df_long to 'out/df_long.parquet';
 -- EXPORT DATABASE 'out/long_duckdb' (FORMAT PARQUET);
 -- IMPORT DATABASE 'out/long_duckdb';
 -- show tables;
+
+.exit

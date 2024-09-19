@@ -167,8 +167,7 @@ _tools/__pycache__/
 _ts_AQ.Rproj
 _tools/ReportRunner.exe
 _tools/ReportRunner.Readme.html
-out/*.parquet
-out/*.tsv
+out/*.*
 out/csv/
 out/long_duckdb/
 _h2d_test/
