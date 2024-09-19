@@ -1,4 +1,6 @@
 
+/* Suggests use [uid] in the PowerShell script obtaining time series */
+
 duckdb out/df_long.duckdb
 -- duckdb
 
