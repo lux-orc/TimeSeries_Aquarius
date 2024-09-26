@@ -2,7 +2,6 @@
 /* Suggests use [uid] in the PowerShell script obtaining time series */
 
 duckdb out/df_long.duckdb
--- duckdb
 
 
 -- Read the JSON files ('plate_info.json') from <info> folder
@@ -30,7 +29,7 @@ create or replace table params as
 
 
 -- Create a long format frame before save
-create or replace table df_long as
+create or replace table ts_long as
     -- Read all CSV files in the <out> folder, recursively -> `tmp`
     with tmp as (
         select *
@@ -60,17 +59,13 @@ create or replace table df_long as
             split_part(ID, '@', 1) as Parameter,
             parse_filename(filename, true, 'system') as uid
         from cte
-    ),
-    -- Add the extra information - Unit, and Site names
-    ts_long as (
-        select t.TimeStamp, t.Value, pa.Unit, t.Parameter, pl.*, t.folder, t.uid
-        from tmp_long t
-        left join plates pl on t.Location = pl.Location
-        left join params pa on t.Parameter = pa.Parameter
     )
-    -- CAST the [TimeStamp] from TIMESTAMP to VARCHAR (optional)
-    select * replace (strftime(TimeStamp, '%Y-%m-%d %H:%M:%S') as TimeStamp)
-    from ts_long
+    -- Add the extra information - Unit, and Site names
+    select
+        t.TimeStamp, t.Value, pa.Unit, t.Parameter, pl.*, t.folder, t.uid
+    from tmp_long t
+    left join plates pl on t.Location = pl.Location
+    left join params pa on t.Parameter = pa.Parameter
     -- Try not to use `order by` clause in CTE/subquery - use it in the main query instead!
     order by folder, Site, TimeStamp
 ;
@@ -83,18 +78,18 @@ copy (
         Site,
         folder,
         any_value(Unit) as Unit,
-        min(TimeStamp::TIMESTAMP) as Start,
-        max(TimeStamp::TIMESTAMP) as End,
+        min(TimeStamp) as Start,
+        max(TimeStamp) as End,
         -- avg(Value).round(3) as Mean,
         -- stddev_samp(Value).round(3) as Std,  -- Should use the sample standard deviation
         min(Value).round(3) as Min,
-        arg_min(TimeStamp::TIMESTAMP, Value) as Time_min,
+        arg_min(TimeStamp, Value) as Time_min,
         -- quantile_cont(Value, .25).round(3) as "25%",
         median(Value).round(3) as Median,
         -- quantile_cont(Value, .75).round(3) as "75%",
         max(Value).round(3) as Max,
-        arg_max(TimeStamp::TIMESTAMP, Value) as Time_max,
-    from df_long
+        arg_max(TimeStamp, Value) as Time_max,
+    from ts_long
     group by folder, Site
     order by folder, Site
 ) to 'out/data_summary.tsv' (FORMAT CSV, DELIMITER '\t', HEADER);
@@ -104,7 +99,11 @@ copy (
 
 
 -- Export the obtained data to a PARQUET file
-copy df_long to 'out/df_long.parquet';
+copy (
+    -- CAST the [TimeStamp] from TIMESTAMP to VARCHAR (optional)
+    select * replace (strftime(TimeStamp, '%Y-%m-%d %H:%M:%S') as TimeStamp)
+    from ts_long
+) to 'out/df_long.parquet';
 
 
 -- EXPORT DATABASE 'out/long_duckdb' (FORMAT PARQUET);
