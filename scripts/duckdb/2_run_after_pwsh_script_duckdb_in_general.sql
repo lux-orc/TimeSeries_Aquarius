@@ -88,7 +88,7 @@ copy (
         median(Value).round(3) as Median,
         quantile_cont(Value, .75).round(3) as "75%",
         max(Value).round(3) as Max,
-        arg_max(TimeStamp, Value) as Time_max,
+        arg_max(TimeStamp, Value) as Time_max
     from ts_long
     group by folder, Site
     order by folder, Site
