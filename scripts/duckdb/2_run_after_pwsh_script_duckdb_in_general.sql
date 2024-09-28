@@ -41,7 +41,7 @@ create or replace table ts_long as
             filename = true
         )
     ),
-    -- Create a temporary frame (in long format)
+    -- Create a long-format frame (UNPIVOT)
     cte as (
         unpivot tmp
         on columns(* exclude (TimeStamp, filename))
