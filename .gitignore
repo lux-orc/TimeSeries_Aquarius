@@ -174,6 +174,7 @@ _h2d_test/
 scripts/_function_testing.ps1
 scripts/duckdb/_making_progress_limitations.sql
 scripts/duckdb/_making_progress_in_general.sql
+scripts/duckdb/2_run_after_pwsh_script_duckdb_limitations.sql
 scripts/tmp.ps1
 scripts/tmp.py
 scripts/tmp.R
