@@ -17,7 +17,7 @@ d <- hourly_2_daily(h, agg = sum)
 con <- dbConnect(duckdb())
 duckdb_register(con, "h", h)
 
-q_str = r'(
+q_str = r"(
     with tmp as (
         select
             *,
@@ -33,7 +33,7 @@ q_str = r'(
     -- This is where you can set the prop value
     having count("Leith at Pinehill") / 24 >= 1
     order by Date
-)'
+)"
 
 d_duckdb <- dbGetQuery(con, q_str)
 setDT(d_duckdb)
@@ -42,5 +42,5 @@ setDT(d_duckdb)
 # Load the daily time series from AQ
 d_AQ <- arrow::read_parquet("_hourly_2_daily_test/data/dRain_wide.parquet")
 setDT(d_AQ)
-d_AQ[, Date := as.Date(d_AQ$Date, format = "%Y-%m-%d")]
+d_AQ[, Date := as.Date(Date, format = "%Y-%m-%d")]
 
