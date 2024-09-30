@@ -11,14 +11,7 @@ h <- arrow::read_parquet(fi)
 setDT(h)
 
 h[, Time := as.POSIXct(Time, tz = "Etc/GMT-12", format = "%Y-%m-%d %H:%M:%S")]
-
 d <- hourly_2_daily(h, agg = sum)
-
-# Load the daily time series from AQ
-d_AQ <- arrow::read_parquet("_hourly_2_daily_test/data/dRain_wide.parquet")
-setDT(d_AQ)
-d_AQ[, Date := as.Date(d_AQ$Date, format = "%Y-%m-%d")]
-
 
 # Register the dataframe (using duckdb)
 con <- dbConnect(duckdb())
@@ -45,4 +38,9 @@ q_str = r'(
 d_duckdb <- dbGetQuery(con, q_str)
 setDT(d_duckdb)
 
+
+# Load the daily time series from AQ
+d_AQ <- arrow::read_parquet("_hourly_2_daily_test/data/dRain_wide.parquet")
+setDT(d_AQ)
+d_AQ[, Date := as.Date(d_AQ$Date, format = "%Y-%m-%d")]
 
