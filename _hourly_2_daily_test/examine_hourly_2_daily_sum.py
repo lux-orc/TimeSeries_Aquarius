@@ -17,7 +17,7 @@ import _tools.fun_s_pl as fpl
 
 
 p = Path('.')
-pp = p / '_h2d_test'
+pp = p / '_hourly_2_daily_test'
 ppp = pp / 'data'
 
 
@@ -58,19 +58,19 @@ q_str = f"""
         select
             *,
             time_bucket(
-                '1 day', "{col_dt}" - '{day_starts_at+1} hour'::interval
-            )::date as "Date"
+                interval 1 day, "{col_dt}" - interval {day_starts_at+1} hour
+            )::date as Date
         from hts
     )
     select
-        "Date",
+        Date,
         -- This is where the aggregate function can be set up
         {agg}("{col_site}") as Agg_{agg}
     from tmp
-    group by "Date"
+    group by Date
     -- This is where you can set the prop value
     having count("{col_site}") / 24 >= {prop}
-    order by "Date"
+    order by Date
 """
 
 
@@ -99,7 +99,7 @@ def hourly_2_daily(
         What time (hour) a day starts - 0 o'clock by default.
         e.g., 9 means the output of daily time series by 9 o'clock!
     agg : str, optional, default='avg'
-        Customised aggregation function (from DuckDB) - avg by default (`avg`)
+        Aggregate function (from DuckDB) - avg by default (`avg`)
     prop : float, optional, default=1
         The ratio of the available data (within a day range)
 
@@ -126,17 +126,17 @@ def hourly_2_daily(
             select
                 *,
                 time_bucket(
-                    '1 day', "{col_dt}" - '{day_starts_at+1} hour'::interval
-                )::date as "Date"
+                    interval 1 day, "{col_dt}" - interval {day_starts_at+1} hour
+                )::date as Date
             from hts
         )
         select
-            "Date",
+            Date,
             {agg}("{col_v}") as Agg_{agg}
         from tmp
-        group by "Date"
+        group by Date
         having count("{col_v}") / 24 >= {prop}
-        order by "Date"
+        order by Date
     """)
     return r.pl().pipe(na_ts_insert).with_columns(pl.lit(col_v).alias('Site'))
 

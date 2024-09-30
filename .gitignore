@@ -171,7 +171,7 @@ _tools/ReportRunner.Readme.html
 out/*.*
 out/csv/
 out/long_duckdb/
-# _h2d_test/
+# _hourly_2_daily_test/
 scripts/_function_testing.ps1
 scripts/duckdb/_making_progress_limitations.sql
 scripts/duckdb/_making_progress_in_general.sql
