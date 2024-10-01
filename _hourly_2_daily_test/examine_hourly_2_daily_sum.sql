@@ -14,7 +14,8 @@ create or replace table d_rain_sum as
         select
             *,
             -- This is where you can set in which hour the day starts
-            time_bucket(interval 1 day, Time - interval 1 hour)::date as Date
+            date_trunc('day', Time - interval 1 hour) as Date  -- recommended
+            -- time_bucket(interval 1 day, Time - interval 1 hour)::date as Date
         from h_rain
     )
     select

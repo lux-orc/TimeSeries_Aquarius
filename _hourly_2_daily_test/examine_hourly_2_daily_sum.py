@@ -57,9 +57,10 @@ q_str = f"""
     with tmp as (
         select
             *,
-            time_bucket(
-                interval 1 day, "{col_dt}" - interval {day_starts_at+1} hour
-            )::date as Date
+            date_trunc('day', "{col_dt}" - interval {day_starts_at+1} hour) as Date
+            -- time_bucket(
+            --    interval 1 day, "{col_dt}" - interval {day_starts_at+1} hour
+            -- )::date as Date
         from hts
     )
     select
@@ -125,9 +126,10 @@ def hourly_2_daily(
         with tmp as (
             select
                 *,
-                time_bucket(
-                    interval 1 day, "{col_dt}" - interval {day_starts_at+1} hour
-                )::date as Date
+                date_trunc('day', "{col_dt}" - interval {day_starts_at+1} hour) as Date
+                -- time_bucket(
+                --     interval 1 day, "{col_dt}" - interval {day_starts_at+1} hour
+                -- )::date as Date
             from hts
         )
         select

@@ -21,7 +21,8 @@ q_str = r"(
     with tmp as (
         select
             *,
-            time_bucket(interval 1 day, "Time" - interval 1 hour)::date as Date
+            date_trunc('day', Time - interval 1 hour) as Date
+            -- time_bucket(interval 1 day, "Time" - interval 1 hour)::date as Date
         from h
     )
     select
