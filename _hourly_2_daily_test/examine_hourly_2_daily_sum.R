@@ -17,12 +17,11 @@ d <- hourly_2_daily(h, agg = sum)
 con <- dbConnect(duckdb())
 duckdb_register(con, "h", h)
 
-q_str = r"(
+q_str <- r"(
     with tmp as (
         select
             *,
             date_trunc('day', Time - interval 1 hour) as Date
-            -- time_bucket(interval 1 day, "Time" - interval 1 hour)::date as Date
         from h
     )
     select
@@ -31,7 +30,6 @@ q_str = r"(
         sum("Leith at Pinehill") as Agg_sum
     from tmp
     group by Date
-    -- This is where you can set the prop value
     having count("Leith at Pinehill") / 24 >= 1
     order by Date
 )"
