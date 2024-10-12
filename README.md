@@ -30,5 +30,5 @@ To download the time series data from Aquarius and organise the data in `DataFra
 
       ```r
       # Install the above R packages
-      > install.packages(c('httr', 'data.table', 'arrow'))
+      > install.packages(c("httr", "data.table", "arrow"))
       ```
