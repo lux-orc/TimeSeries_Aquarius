@@ -4,22 +4,35 @@
 duckdb out/df_long.duckdb
 
 
--- Read the JSON files ('plate_info.json') from <info> folder
+-- Read the JSON files ('plate_info.json', 'plate_info.json') from <info> folder
+set variable file_plate = 'info/plate_info.json';
+-- set variable file_plate = (
+--     'https://raw.githubusercontent.com/lux-orc/' ||
+--     'TimeSeries_Aquarius/refs/heads/master/' ||
+--     'info/plate_info.json'
+-- );
 create or replace table plates as
     with id_site as (
         select * as id_site
-        from 'info/plate_info.json'
+        from read_json(getvariable('file_plate'))
+        -- from 'info/plate_info.json'
     )
     select
         unnest(map_keys(id_site)) as Location,
         unnest(map_values(id_site)) as Site
     from id_site
 ;
--- Read the JSON files ('plate_info.json') from <info> folder
+set variable file_param = 'info/param_info.json';
+-- set variable file_param = (
+--     'https://raw.githubusercontent.com/lux-orc/' ||
+--     'TimeSeries_Aquarius/refs/heads/master/' ||
+--     'info/param_info.json'
+-- );
 create or replace table params as
     with param_unit as (
         select * as param_unit
-        from 'info/param_info.json'
+        from read_json(getvariable('file_param'))
+        -- from 'info/param_info.json'
     )
     select
         unnest(map_keys(param_unit)) as Parameter,
