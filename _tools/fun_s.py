@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import urllib3
 
-# Some display settings for numpy Array, Pandas and Polars DataFrame
+# Some display settings for numpy Array, Pandas DataFrame
 np.set_printoptions(precision=4, linewidth=94, suppress=True)
 pd.set_option('display.max_columns', None)
 
@@ -463,7 +463,7 @@ def _DWU_AQ(
 
 
 def hourly_WU_AQ(
-        siteList: 'str | list[str]',
+        site_list: 'str | list[str]',
         date_start: int = None,
         date_end: int = None,
         raw_data: bool = False,
@@ -473,7 +473,7 @@ def hourly_WU_AQ(
 
     Parameters
     ----------
-    siteList : str | list[str]
+    site_list : str | list[str]
         A list of water meters' names
     date_start : int, optional, default=None
         Start date of the requested data. It follows '%Y%m%d' When specified.
@@ -489,20 +489,20 @@ def hourly_WU_AQ(
     pd.DataFrame
         A DataFrame of hourly abstraction
     """
-    if isinstance(siteList, str):
-        siteList = [siteList]
-    siteList = list(dict.fromkeys(siteList))
+    if isinstance(site_list, str):
+        site_list = [site_list]
+    site_list = list(dict.fromkeys(site_list))
     if raw_data:
-        d = {site: _HWU_AQ(site, date_start, date_end, True) for site in siteList}
+        d = {site: _HWU_AQ(site, date_start, date_end, True) for site in site_list}
         for k, v in d.items():
             v.insert(0, 'Site', k)
         return pd.concat(d.values(), axis=0, join='outer', ignore_index=True)
-    lst = [_HWU_AQ(site, date_start, date_end, False) for site in siteList]
+    lst = [_HWU_AQ(site, date_start, date_end, False) for site in site_list]
     return reduce(lambda a, b: a.join(b, how='outer'), lst).pipe(na_ts_insert)
 
 
 def daily_WU_AQ(
-        siteList: 'str | list[str]',
+        site_list: 'str | list[str]',
         date_start: int = None,
         date_end: int = None,
         raw_data: bool = False,
@@ -512,7 +512,7 @@ def daily_WU_AQ(
 
     Parameters
     ----------
-    siteList : str | list[str]
+    site_list : str | list[str]
         A list of water meters' names
     date_start : int, optional, default=None
         Start date of the requested data. It follows '%Y%m%d' When specified.
@@ -528,13 +528,13 @@ def daily_WU_AQ(
     pd.DataFrame
         A DataFrame of daily abstraction
     """
-    if isinstance(siteList, str):
-        siteList = [siteList]
-    siteList = list(dict.fromkeys(siteList))
+    if isinstance(site_list, str):
+        site_list = [site_list]
+    site_list = list(dict.fromkeys(site_list))
     if raw_data:
-        d = {site: _DWU_AQ(site, date_start, date_end, True) for site in siteList}
+        d = {site: _DWU_AQ(site, date_start, date_end, True) for site in site_list}
         for k, v in d.items():
             v.insert(0, 'Site', k)
         return pd.concat(d.values(), axis=0, join='outer', ignore_index=True)
-    lst = [_DWU_AQ(site, date_start, date_end, False) for site in siteList]
+    lst = [_DWU_AQ(site, date_start, date_end, False) for site in site_list]
     return reduce(lambda a, b: a.join(b, how='outer'), lst).pipe(na_ts_insert)

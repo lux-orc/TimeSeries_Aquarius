@@ -482,11 +482,11 @@ clean_24h_datetime <- Vectorize(.clean_24h_datetime, SIMPLIFY = TRUE, USE.NAMES 
 }
 
 
-hourly_WU_AQ <- function(siteList, date_start = NA, date_end = NA, raw_data = FALSE) {
+hourly_WU_AQ <- function(site_list, date_start = NA, date_end = NA, raw_data = FALSE) {
   # A wrapper of getting hourly rate for multiple water meters (from Aquarius).
   #
   # Args:
-  #   siteList: char. A list of water meters' names.
+  #   site_list: char. A list of water meters' names.
   #   date_start: int, optional (default as NA)
   #     Start date of the requested data. It follows '%Y%m%d' When specified.
   #     Otherwise, request the data from its very beginning. The default is NA.
@@ -498,26 +498,26 @@ hourly_WU_AQ <- function(siteList, date_start = NA, date_end = NA, raw_data = FA
   #
   # Returns:
   #   A data.table of hourly abstraction
-  siteList <- unique(siteList)
+  site_list <- unique(site_list)
   if (raw_data) {
     ts_raw_list <- lapply(
-      siteList, .HWU_AQ, date_start = date_start, date_end = date_end, raw_data = TRUE)
-    names(ts_raw_list) <- siteList
+      site_list, .HWU_AQ, date_start = date_start, date_end = date_end, raw_data = TRUE)
+    names(ts_raw_list) <- site_list
     ts_raw <- rbindlist(ts_raw_list, idcol = TRUE)
     setnames(ts_raw, ".id", "Site")
     return(ts_raw[])
   }
-  ts_list <- lapply(siteList, .HWU_AQ, date_start = date_start, date_end = date_end)
+  ts_list <- lapply(site_list, .HWU_AQ, date_start = date_start, date_end = date_end)
   ts_dt <- Reduce(function(a, b) merge.data.table(a, b, by = "Time", all = TRUE), ts_list)
   return(na_ts_insert(ts_dt))
 }
 
 
-daily_WU_AQ <- function(siteList, date_start = NA, date_end = NA, raw_data = FALSE) {
+daily_WU_AQ <- function(site_list, date_start = NA, date_end = NA, raw_data = FALSE) {
   # A wrapper of getting daily rate for multiple water meters (from Aquarius).
   #
   # Args:
-  #   siteList: char. A list of water meters' names.
+  #   site_list: char. A list of water meters' names.
   #   date_start: int, optional (default as NA)
   #     Start date of the requested data. It follows '%Y%m%d' When specified.
   #     Otherwise, request the data from its very beginning. The default is NA.
@@ -529,16 +529,16 @@ daily_WU_AQ <- function(siteList, date_start = NA, date_end = NA, raw_data = FAL
   #
   # Returns:
   #   A data.table of daily abstraction
-  siteList <- unique(siteList)
+  site_list <- unique(site_list)
   if (raw_data) {
     ts_raw_list <- lapply(
-      siteList, .DWU_AQ, date_start = date_start, date_end = date_end, raw_data = TRUE)
-    names(ts_raw_list) <- siteList
+      site_list, .DWU_AQ, date_start = date_start, date_end = date_end, raw_data = TRUE)
+    names(ts_raw_list) <- site_list
     ts_raw <- rbindlist(ts_raw_list, idcol = TRUE)
     setnames(ts_raw, ".id", "Site")
     return(ts_raw[])
   }
-  ts_list <- lapply(siteList, .DWU_AQ, date_start = date_start, date_end = date_end)
+  ts_list <- lapply(site_list, .DWU_AQ, date_start = date_start, date_end = date_end)
   ts_dt <- Reduce(function(a, b) merge.data.table(a, b, by = "Date", all = TRUE), ts_list)
   return(na_ts_insert(ts_dt))
 }
